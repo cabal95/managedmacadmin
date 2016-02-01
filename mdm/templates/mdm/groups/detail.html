@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load mdm_extras %}
+
+{% block extra_style %}
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/style.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/selectize.bootstrap2.css' %}" />
+
+<style type="text/css">
+#groupDetails {
+    border: 1px solid rgb(230, 230, 230);
+}
+#groupDetails > .row-fluid:nth-of-type(odd) {
+    background: rgb(249, 249, 249);
+}
+#groupDetails > .row-fluid > .header {
+    font-weight: bold;
+}
+#groupDetails > .row-fluid > div {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+table.deviceList > tbody > tr > td > button.btnRemoveDevice { visibility: hidden; }
+table.deviceList > tbody > tr:hover { background-color: #fafafa; }
+table.deviceList > tbody > tr:hover > td > button.btnRemoveDevice { visibility: visible; }
+
+table.groupList > tbody > tr > td > button.btnRemoveGroup { visibility: hidden; }
+table.groupList > tbody > tr:hover { background-color: #fafafa; }
+table.groupList > tbody > tr:hover > td > button.btnRemoveGroup { visibility: visible; }
+
+table.prefList > tbody > tr > td > button.btnRemovePreference { visibility: hidden; }
+table.prefList > tbody > tr:hover { background-color: #fafafa; }
+table.prefList > tbody > tr:hover > td > button.btnRemovePreference { visibility: visible; }
+</style>
+{% endblock %}
+
+{% block java_script %}
+<script type="text/javascript" charset="utf-8" src="{% static 'mdm/mdm.js' %}"></script>
+<script type="text/javascript" charset="utf-8" src="{% static 'mdm/selectize.min.js' %}"></script>
+
+<script type="text/javascript" charset="utf-8">
+  var commandListTable;
+
+  $(document).ready(function() {
+    var deviceList = $('.deviceList').dataTable({
+        "iDisplayLength": 20,
+        "aLengthMenu": [[10, 20, 50, -1], [10, 20, 50, "All"]],
+        "sPaginationType": "bootstrap",
+        "bStateSave": false,
+        "aaSorting": [[0,'asc']]
+    });
+
+    var groupList = $('.groupList').dataTable({
+        "iDisplayLength": 20,
+        "aLengthMenu": [[10, 20, 50, -1], [10, 20, 50, "All"]],
+        "sPaginationType": "bootstrap",
+        "bStateSave": false,
+        "aaSorting": [[0,'asc']]
+    });
+
+    var prefList = $('.prefList').dataTable({
+        "iDisplayLength": 20,
+        "aLengthMenu": [[10, 20, 50, -1], [10, 20, 50, "All"]],
+        "sPaginationType": "bootstrap",
+        "bStateSave": false,
+        "aaSorting": [[0,'asc']]
+    });
+
+    var editSave = function (object, value, done) {
+      $.ajax({
+		url: 'api',
+		data: { 'command': 'set', 'attribute': $(object).data('attribute'), 'value': value },
+		dataType: 'json'
+      })
+      .done(function (data) {
+        if (data.status != 'OK') {
+          alert('Error: ' + data.error);
+          done(false);
+        }
+        else
+          done(true);
+      })
+      .fail(function () { alert('Error contacting server.'); done(false); })
+    };
+
+    var btnRemoveDeviceFunction = function () {
+        var tr = $(this).closest('tr');
+	$.ajax({
+	    url: 'api?command=removeDevice&id=' + encodeURIComponent($(this).data('id')),
+	    dataType: 'json'
+	})
+	.done(function(data) {
+	    if (data.status == 'OK') {
+		deviceList.fnDeleteRow(tr.get(0));
+		return;
+	    }
+            alert('Error: ' + data.error);
+        })
+        .fail(function() {
+	    alert('Failed to contact server.');
+        });
+    };
+
+    var btnRemoveGroupFunction = function () {
+        var tr = $(this).closest('tr');
+	$.ajax({
+	    url: 'api?command=removeGroup&id=' + encodeURIComponent($(this).data('id')),
+	    dataType: 'json'
+	})
+	.done(function(data) {
+	    if (data.status == 'OK') {
+		groupList.fnDeleteRow(tr.get(0));
+		return;
+	    }
+            alert('Error: ' + data.error);
+        })
+        .fail(function() {
+	    alert('Failed to contact server.');
+        });
+    };
+
+    var btnRemovePreferenceFunction = function () {
+        var tr = $(this).closest('tr');
+	$.ajax({
+	    url: 'api?command=removePreference&identifier=' + encodeURIComponent($(this).data('id')),
+	    dataType: 'json'
+	})
+	.done(function(data) {
+	    if (data.status == 'OK') {
+		prefList.fnDeleteRow(tr.get(0));
+		return;
+	    }
+            alert('Error: ' + data.error);
+        })
+        .fail(function() {
+	    alert('Failed to contact server.');
+        });
+    };
+
+    $('span.editable').each(function() { $(this).editable(editSave); });
+
+    var deviceSelector = $('#addDeviceTxt').selectize({
+	create: false,
+	valueField: 'id',
+	labelField: 'name',
+        searchField: ['name'],
+	load: function(query, callback) {
+	    if (!query.length) return callback();
+	    $.ajax({
+		url: 'api?command=availableDevices&query=' + encodeURIComponent(query),
+		dataType: 'json'
+	    })
+	    .done(function(data) {
+                return callback(data.items);
+            })
+            .fail(function() {
+                callback();
+            });
+	}
+    });
+    deviceSelector.on('change', function() {
+      var value = deviceSelector[0].selectize.getValue();
+      if (value.length == 0)
+        $('#addDevices').addClass('disabled');
+      else
+        $('#addDevices').removeClass('disabled');
+    });
+
+    var groupSelector = $('#addGroupTxt').selectize({
+	create: false,
+	valueField: 'id',
+	labelField: 'name',
+        searchField: ['name'],
+	load: function(query, callback) {
+	    if (!query.length) return callback();
+	    $.ajax({
+		url: 'api?command=availableGroups&query=' + encodeURIComponent(query),
+		dataType: 'json'
+	    })
+	    .done(function(data) {
+                return callback(data.items);
+            })
+            .fail(function() {
+                callback();
+            });
+	}
+    });
+    groupSelector.on('change', function() {
+      var value = groupSelector[0].selectize.getValue();
+      if (value.length == 0)
+        $('#addGroups').addClass('disabled');
+      else
+        $('#addGroups').removeClass('disabled');
+    });
+
+    $('#txtNewIdentifier').keyup(function(e) {
+      if ($(this).val().length == 0)
+        $('#btnNewIdentifier').addClass('disabled');
+      else
+        $('#btnNewIdentifier').removeClass('disabled');
+    });
+
+    $('#btnNewIdentifier').click(function() {
+      var identifier = $('#txtNewIdentifier').val();
+      var btn = $(this);
+
+      if (identifier.length == 0)
+        return;
+    
+      btn.addClass('active');
+      $.ajax({
+          url: 'api',
+          data: { 'command': 'addPreference', 'identifier': identifier },
+          dataType: 'json'
+      })
+      .done(function (data) {  
+        if (data.status != 'OK')
+          alert('Error: ' + data.error);
+        else
+          window.location = data.url;
+      })
+      .fail(function () { alert('Error contacting server.'); })
+      .always(function() { $(btn).removeClass('active'); });
+    });
+
+    $('#addDevices').click(function () {
+        var value = deviceSelector[0].selectize.getValue();
+        if (value.length == 0)
+          return;
+
+	$.ajax({
+	    url: 'api?command=addDevices&id=' + encodeURIComponent(value),
+	    dataType: 'json'
+	})
+	.done(function(data) {
+	    if (data.status == 'OK') {
+		deviceSelector[0].selectize.clear();
+                for (var i = 0; i < data.items.length; i++) {
+		    deviceList.fnAddData([ data.items[i].name + ' <button data-id="' + data.items[i].id + '" class="btnRemoveDevice btn btn-danger btn-small"><i class="icon-remove-sign"></i></button>']);
+                    $("button[data-id='" + data.items[i].id + "']").deleteButton(btnRemoveDeviceFunction);
+		}
+		return;
+	    }
+            alert('Error: ' + data.error);
+        })
+        .fail(function() {
+	    alert('Failed to contact server.');
+        });
+    });
+
+    $('#addGroups').click(function () {
+        var value = groupSelector[0].selectize.getValue();
+        if (value.length == 0)
+          return;
+
+	$.ajax({
+	    url: 'api?command=addGroups&id=' + encodeURIComponent(value),
+	    dataType: 'json'
+	})
+	.done(function(data) {
+	    if (data.status == 'OK') {
+		groupSelector[0].selectize.clear();
+                for (var i = 0; i < data.items.length; i++) {
+		    groupList.fnAddData([ data.items[i].name + ' <button data-id="' + data.items[i].id + '" class="btnRemoveGroup btn btn-danger btn-small"><i class="icon-remove-sign"></i></button>']);
+                    $("button[data-id='" + data.items[i].id + "']").deleteButton(btnRemoveGroupFunction);
+		}
+		return;
+	    }
+            alert('Error: ' + data.error);
+        })
+        .fail(function() {
+	    alert('Failed to contact server.');
+        });
+    });
+
+    $('.btnRemoveDevice').deleteButton(btnRemoveDeviceFunction);
+    $('.btnRemoveGroup').deleteButton(btnRemoveGroupFunction);
+    $('.btnRemovePreference').deleteButton(btnRemovePreferenceFunction);
+
+    var hash = document.location.hash;
+    if (hash)
+      $('a[href="' + hash + '"]').click();
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<h3><span id="groupName" class="editable" data-required="true" data-attribute="name">{{ group.name }}</span></h3>
+<div class="row-fluid">
+  <div id="groupDetails" class="span6">
+    <table class="table table-striped table-condensed">
+      <tbody>
+        <tr><th>Description:</th><td><span id="groupDescription" class="editable" data-required="false" data-attribute="description">{{ group.description }}</span></td></tr>
+        <tr><th>Priority:</th><td><span id="groupPriority" class="editable" data-required="true" data-attribute="priority">{{ group.priority }}</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+
+<div id="tabs" style="margin-top: 25px;" class="highlight">
+  <ul class="nav nav-pills" data-tabs="tabs">
+    <li class="active"><a href="#devices" data-toggle="tab">Devices</a></li>
+    <li><a href="#groups" data-toggle="tab">Groups</a></li>
+    <li><a href="#preferences" data-toggle="tab">Preferences</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane active" id="devices">
+      <table class="deviceList table table-condensed">
+        <thead>
+          <tr><th>Device</th></tr>
+        </thead>
+        <tbody>
+{% for device in group.devices.all %}
+          <tr><td><a href="{% url 'device_detail' device.udid %}">{{ device }}</a>&nbsp;<button data-id="{{ device.udid }}" class="btnRemoveDevice btn btn-danger btn-small"><i class="icon-remove-sign"></i></button></tr>
+{% endfor %}
+        </tbody>
+      </table>
+
+      <div style="margin-top: 35px;">
+        <input id="addDeviceTxt" type="text" />
+        <button id="addDevices" class="btn btn-success disabled" style="margin-top: 5px;"><i class="icon-plus-sign"></i> Add</button>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="groups">
+      <table class="groupList table table-condensed">
+        <thead>
+          <tr><th>Groups</th></tr>
+        </thead>
+        <tbody>
+{% for g in group.groups.all %}
+          <tr><td><a href="{% url 'devicegroup_detail' g.uuid %}">{{ g.name }}</a>&nbsp;<button data-id="{{ g.uuid }}" class="btnRemoveGroup btn btn-danger btn-small"><i class="icon-remove-sign"></i></button></tr>
+{% endfor %}
+        </tbody>
+      </table>
+
+      <div style="margin-top: 35px;">
+        <input id="addGroupTxt" type="text" />
+        <button id="addGroups" class="btn btn-success disabled" style="margin-top: 5px;"><i class="icon-plus-sign"></i> Add</button>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="preferences">
+      <table class="prefList table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th>Application</th>
+            <th>Identifier</th>
+          </tr>
+        </thead>
+        <tbody>
+{% for pref in preferences %}
+          <tr>
+            <td><a href="{% url 'devicegroup_preference_edit' group.uuid pref.identifier %}">{{ pref.name }}</a>&nbsp;<button data-id="{{ pref.identifier }}" class="btnRemovePreference btn btn-danger btn-small"><i class="icon-remove-sign"></i></button></td>
+            <td>{{ pref.identifier }}</td>
+          </tr>
+{% endfor %}
+        </body>
+      </table>
+
+      <div style="margin-top: 45px;">
+        <div><input id="txtNewIdentifier" type="text" placeholder="Identifier" /></div>
+        <button id="btnNewIdentifier" class="btn btn-success has-spinner disabled">
+          <span class="spinner">
+            <i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i>
+          </span>
+          <i class="icon-plus"></i> Add
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

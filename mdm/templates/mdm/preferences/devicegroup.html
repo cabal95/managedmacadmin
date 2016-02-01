@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load mdm_extras %}
+{% load static %}
+
+{% block extra_style %}
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/style.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/jquery.plist.css' %}" />
+{% endblock %}
+
+{% block java_script %}
+<script type="text/javascript" src="{% static 'mdm/jquery.plist.js' %}"></script>
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function() {
+  $.ajax({url: '.', data: { command: 'get' }, dataType: 'json' })
+	.success(function (data) {
+          if (data.status == 'OK') {
+	    $('#plist').loadPropertyList($.parseXML(data.data), { protect: 2 });
+            return;
+          }
+          alert(data.error);
+	})
+	.error(function() {
+	    alert('Error loading content');
+	});
+
+  $('#btnSave').click(function() {
+    var plist = $('#plist').savePropertyList();
+
+    $.ajax({
+	type: 'POST',
+	data: { command: 'set', plist: plist },
+        dataType: 'json'
+	})
+        .success(function (data) {
+          if (data.status == 'OK')
+            window.location = "{% url 'devicegroup_detail' group.uuid %}#preferences";
+          else
+            alert('Error: ' + data.error);
+	})
+	.error(function() {
+	    alert('Error saving data.');
+	});
+  });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>{{ group.name }}</h2>
+
+<div>
+  <h4>{{identifier}}</h4>
+  <div id="plist"></div>
+</div>
+
+<div style="margin-top: 20px;">
+  <button id="btnSave" class="btn btn-primary">Save</button>
+  <a href="{% url 'devicegroup_detail' group.uuid %}#preferences" class="btn btn-warning">Cancel</a>
+</div>
+{% endblock %}

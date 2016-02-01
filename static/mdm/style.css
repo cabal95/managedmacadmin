@@ -1,0 +1,37 @@
+.highlight {
+  padding: 9px 14px;
+  margin-bottom: 14px;
+  background-color: #f7f7f9;
+  border: 1px solid #e1e1e8;
+  border-radius: 4px;
+}
+
+div.actions a {
+  margin-bottom: 5px;
+}
+
+.spinner {
+  display: inline-block;
+  opacity: 0;
+  max-width: 0;
+
+  -webkit-transition: opacity 0.25s, max-width 0.45s; 
+  -moz-transition: opacity 0.25s, max-width 0.45s;
+  -o-transition: opacity 0.25s, max-width 0.45s;
+  transition: opacity 0.25s, max-width 0.45s; /* Duration fixed since we animate additional hidden width */
+}
+
+.has-spinner.active .spinner {
+  opacity: 1;
+  max-width: 50px; /* More than it will ever come, notice that this affects on animation duration */
+}
+
+.progress {
+  margin-bottom: 0px;
+}
+
+.editable > i.fa-edit { opacity: 0; padding-left: 5px; padding-right: 5px; }
+.editable.empty > i.fa-edit { opacity: 1; }
+.editable:hover > i.fa-edit { opacity: 1; cursor: pointer; }
+.editable > input.editing { margin-bottom: 0px; }
+.editable > button { margin-left: 5px; }

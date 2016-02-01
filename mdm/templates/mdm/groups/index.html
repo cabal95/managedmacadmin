@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load mdm_extras %}
+{% load static %}
+
+{% block extra_style %}
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/style.css' %}" />
+
+<style type="text/css">
+table.groupList > tbody > tr > td > button.btnRemove { visibility: hidden; }
+table.groupList > tbody > tr:hover > td > button.btnRemove { visibility: visible; }
+</style>
+{% endblock %}
+
+{% block java_script %}
+<script type="text/javascript" src=""></script>
+<script type="text/javascript" charset="utf-8" src="{% static 'mdm/mdm.js' %}"></script>
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function() {
+        var groupList = $('.groupList').dataTable({
+            "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+            "iDisplayLength": 20,
+            "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
+            "sPaginationType": "bootstrap",
+            "bStateSave": true,
+            "oTableTools": {
+                "aButtons": [
+                    "copy",
+                    "text"
+                ]
+            },
+            "aaSorting": [[0,'desc']]
+        });
+
+        $('#btnNewName').click(function() {
+            var name = $('#newName').val();
+            var btn = $(this);
+
+            if ($(btn).hasClass('disabled'))
+                return;
+
+            btn.addClass('active');
+            $.ajax({
+                url: '.',
+                data: { 'command': 'create', 'name': name },
+                dataType: 'json'   
+            })
+            .done(function (data) {
+                if (data.status != 'OK')
+                    alert('Error: ' + data.error);
+                else
+                    window.location = data.id + '/';
+            })
+            .fail(function () { alert('Error contacting server.'); })
+            .always(function() { $(btn).removeClass('active'); });
+        });
+
+        $('#newName').keyup(function(e) {
+          if (e.which == 10 || e.which == 13)
+            $('#btnNewName').click();
+
+          if ($(this).val().length == 0)
+            $('#btnNewName').addClass('disabled');
+          else
+            $('#btnNewName').removeClass('disabled');
+        });
+
+        var btnRemoveFunction = function () {
+            var tr = $(this).closest('tr');
+            $.ajax({
+                url: '.',
+                data: { 'command': 'delete', 'id': $(this).data('id') },
+                dataType: 'json'
+            })
+            .done(function(data) {
+                if (data.status == 'OK') {
+                    groupList.fnDeleteRow(tr.get(0));
+		    return;
+	        }
+                alert('Error: ' + data.error);
+            })
+            .fail(function() {
+	        alert('Failed to contact server.');
+            });
+        };
+
+        $('.btnRemove').deleteButton(btnRemoveFunction);
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<h2 style="margin-bottom: 20px;">Device Groups</h2>
+<table class="table table-striped table-condensed groupList">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Priority</th>
+      <th>Devices</th>
+      <th>Preferences</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for group in groups %}
+    <tr>
+      <td><a href="{{ group.uuid }}/">{{ group.name }}</a>&nbsp;<button data-id="{{ group.uuid }}" class="btnRemove btn btn-danger btn-small"><i class="icon-remove-sign"></i></button></td>
+      <td>{{ group.priority }}</td>
+      <td>{{ group.devices.count }}</td>
+      <td>{{ group.devicegroupmanagedpreference_set.count }}</td>
+    </tr>
+{% endfor %}
+  </body>
+</table>
+
+<div style="margin-top: 20px;">
+  <input id="newName" type="text" style="margin-bottom: 0px;" placeholder="Group Name" />
+  <button id="btnNewName" class="btn btn-success has-spinner disabled">
+    <span class="spinner">
+      <i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i>
+    </span>
+    <i class="icon-plus"></i> New Group
+  </button>
+</div>
+{% endblock %}

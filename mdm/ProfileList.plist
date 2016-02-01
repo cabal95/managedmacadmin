@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CommandUUID</key>
+	<string>8911aa66-7029-4ecc-9f6a-9c8536496ba9</string>
+	<key>ProfileList</key>
+	<array>
+		<dict>
+			<key>HasRemovalPasscode</key>
+			<false/>
+			<key>IsEncrypted</key>
+			<false/>
+			<key>PayloadContent</key>
+			<array>
+				<dict>
+					<key>PayloadDescription</key>
+					<string>Provides device authentication (certificate or identity).</string>
+					<key>PayloadDisplayName</key>
+					<string>ident-mdm.p12</string>
+					<key>PayloadIdentifier</key>
+					<string>com.highdesertchurch.mdmprofile.credential</string>
+					<key>PayloadOrganization</key>
+					<string>High Desert Church</string>
+					<key>PayloadType</key>
+					<string>com.apple.security.pkcs12</string>
+					<key>PayloadUUID</key>
+					<string>D3BFAC16-6273-40FC-A993-F899A4F99DE2</string>
+					<key>PayloadVersion</key>
+					<integer>1</integer>
+				</dict>
+				<dict>
+					<key>PayloadDescription</key>
+					<string>Configures Mobile Device Management</string>
+					<key>PayloadDisplayName</key>
+					<string>Mobile Device Management</string>
+					<key>PayloadIdentifier</key>
+					<string>com.highdesertchurch.mdmprofile.mdm</string>
+					<key>PayloadOrganization</key>
+					<string>High Desert Church</string>
+					<key>PayloadType</key>
+					<string>com.apple.mdm</string>
+					<key>PayloadUUID</key>
+					<string>52B4D23F-CD6D-4965-BAA7-3443F4B14715</string>
+					<key>PayloadVersion</key>
+					<integer>1</integer>
+				</dict>
+			</array>
+			<key>PayloadDescription</key>
+			<string>Profile description.</string>
+			<key>PayloadDisplayName</key>
+			<string>High Desert Church MDM</string>
+			<key>PayloadIdentifier</key>
+			<string>com.highdesertchurch.mdmprofile</string>
+			<key>PayloadOrganization</key>
+			<string>High Desert Church</string>
+			<key>PayloadRemovalDisallowed</key>
+			<false/>
+			<key>PayloadUUID</key>
+			<string>BC32FDC6-0EF0-4AE9-BBF3-396E7AA8C3E0</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>SignerCertificates</key>
+			<array/>
+		</dict>
+	</array>
+	<key>RequestType</key>
+	<string>ProfileList</string>
+	<key>Status</key>
+	<string>Acknowledged</string>
+	<key>UDID</key>
+	<string>05BE944E-1C4C-54C3-88C0-86ED8D74E69B</string>
+</dict>
+</plist>

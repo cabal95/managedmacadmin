@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load mdm_extras %}
+{% load static %}
+
+{% block extra_style %}
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/style.css' %}" />
+{% endblock %}
+
+{% block java_script %}
+<script type="text/javascript" src=""></script>
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function() {
+        $('.devicelist').dataTable({
+            "sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+            "iDisplayLength": 20,
+            "aLengthMenu": [[20, 50, -1], [20, 50, "All"]],
+            "sPaginationType": "bootstrap",
+            "bStateSave": true,
+            "aaSorting": [[1,'desc']]
+        });
+    } );
+</script>
+{% endblock %}
+
+{% block content %}
+<table class="devicelist table table-striped table-condensed">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Last Checkin</th>
+      <th>Battery</th>
+      <th>Type</th>
+      <th>Model</th>
+      <th>Product</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for device in devices %}
+    <tr>
+      <td><a href="detail/{{ device.udid }}/">{{ device }}</a></td>
+      <td data-order="{{ device.last_checkin|date:"U" }}">{{ device.last_checkin }}</td>
+      <td>
+        {% include "mdm/battery_level.html" with battery_level=device.battery_level %}
+      </td>
+      <td>{{ device.get_type_display }}</td>
+      <td>{{ device.product_name | format_model:device.model_name }}</td>
+      <td>{{ device.product_name }}</td>
+    </tr>
+{% endfor %}
+  </body>
+</table>
+{% endblock %}

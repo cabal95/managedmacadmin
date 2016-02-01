@@ -1,0 +1,494 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load mdm_extras %}
+
+{% block extra_style %}
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/style.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/selectize.bootstrap2.css' %}" />
+
+<style type="text/css">
+tr > td > button.btnRemove { visibility: hidden; }
+tr:hover > td > button.btnRemove { visibility: visible; }
+</style>
+{% endblock %}
+
+{% block java_script %}
+<script type="text/javascript" charset="utf-8" src="{% static 'mdm/mdm.js' %}"></script>
+<script type="text/javascript" charset="utf-8" src="{% static 'mdm/selectize.min.js' %}"></script>
+<script type="text/javascript" charset="utf-8">
+  var commandListTable;
+
+  $(document).ready(function() {
+    function updateInstalledProfile(btn) {
+      btn.addClass('active');
+      $.ajax({
+		url: 'api',
+		data: { 'command': 'InstallProfile', 'identifier': btn.data('identifier') },
+		dataType: 'json'
+      })
+      .done(function (data) {
+        if (data.status != 'OK')
+          alert('Error: ' + data.error);
+      })
+      .fail(function () { alert('Error contacting server.'); })
+      .always(function() { $(btn).removeClass('active'); });
+    }
+
+    $('.applicationlist').dataTable({
+        "iDisplayLength": 10,
+        "aLengthMenu": [[10, 20, 50, -1], [10, 20, 50, "All"]],
+        "sPaginationType": "bootstrap",
+        "bStateSave": false,
+        "aaSorting": [[0,'asc']]
+    });
+
+    $('#btnProfiles').click(function () {
+      btn = $(this)
+      if ($(btn).data('loaded') == 'true')
+        return;
+      $(btn).data('loaded', 'true');
+
+      $(btn).addClass('active');
+      $.ajax({ url: 'api?command=InstalledProfiles', dataType: 'json' })
+	.done(function (data) {
+          var table = $('table.profilesTemplate').clone();
+          $(table).addClass('profileList').removeClass('profilesTemplate').show();
+
+          for (var i = 0; i < data.objects.length; i++) {
+            var item = data.objects[i];
+            var row = $('<tr></tr>');
+            var td, btn;
+
+            row.append('<td>' + item.name + '</td>');
+            row.append('<td>' + item.description + '</td>');
+            row.append('<td>' + (item.managed == true ? '<i class="icon-large icon-ok"></i>' : '') + '</td>');
+            row.append('<td>' + (item.managed == true && item.uptodate == true ? '<i class="icon-large icon-ok"></i>' : '') + '</td>');
+            td = $('<td></td>');
+            if (item.managed == true) {
+              if (item.uptodate == false)
+                btn = $('<button class="btn btn-success has-spinner"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin: 5px;"></i></span>Update</button>');
+              else
+                btn = $('<button class="btn btn-info has-spinner"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin: 5px;"></i></span>Re-Install</button>');
+              btn.data('identifier', item.identifier);
+              btn.click(function () { updateInstalledProfile($(this)); });
+
+              $(td).append(btn);
+            }
+            row.append(td);
+
+            $(table).append(row);
+          }
+
+          $(table).appendTo($('#profiles'));
+          $('table.profileList').dataTable({
+              "iDisplayLength": 10,
+              "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+              "sPaginationType": "bootstrap",
+              "bStateSave": false,
+              "aaSorting": [[0,'desc']]
+          });
+	})
+	.fail(function () { $(btn).data('loaded', 'false'); })
+	.always(function() { $(btn).removeClass('active'); });
+    });
+
+    $('#btnCommandHistory').click(function () {
+      btn = $(this)
+      if ($(btn).data('loaded') == 'true')
+        return;
+      $(btn).data('loaded', 'true');
+
+      $(btn).addClass('active');
+      $.ajax({ url: 'api?command=CommandHistory', dataType: 'json' })
+	.done(function (data) {
+          var table = $('table.commandHistoryTemplate').clone();
+          $(table).addClass('commandlist').removeClass('commandHistoryTemplate').show();
+
+          for (var i = 0; i < data.objects.length; i++) {
+            var item = data.objects[i];
+            var row = $('<tr></tr>');
+
+            row.append('<td><span style="display: none;">' + item.date_requested_sort + '</span>' + item.date_requested + '</td>');
+            row.append('<td>' + item.name + '</td>');
+            row.append('<td>' + item.status + '</td>');
+            row.append('<td><span style="display: none;">' + item.date_completed_sort + '</span>' + item.date_completed + '</td>');
+            $(table).append(row);
+          }
+
+          $(table).appendTo($('#commands'));
+          $('table.commandlist').dataTable({
+              "iDisplayLength": 10,
+              "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+              "sPaginationType": "bootstrap",
+              "bStateSave": false,
+              "aaSorting": [[0,'desc']]
+          });
+	})
+	.fail(function () { $(btn).data('loaded', 'false'); })
+	.always(function() { $(btn).removeClass('active'); });
+    });
+
+    $('#btnLocationHistory').click(function () {
+      btn = $(this)
+      if ($(btn).data('loaded') == 'true')
+        return;
+      $(btn).data('loaded', 'true');
+
+      $(btn).addClass('active');
+      $.ajax({ url: 'api?command=LocationHistory', dataType: 'json' })
+	.done(function (data) {
+          var table = $('table.locationHistoryTemplate').clone();
+          $(table).addClass('locationlist').removeClass('locationHistoryTemplate').show();
+
+          for (var i = 0; i < data.objects.length; i++) {
+            var item = data.objects[i];
+            var row = $('<tr></tr>');
+
+            row.append('<td><span style="display: none;">' + item.start_date_sort + '</span>' + item.start_date + '</td>');
+            row.append('<td><span style="display: none;">' + item.end_date_sort + '</span>' + item.end_date + '</td>');
+            row.append('<td>' + item.ip + '</td>');
+            if (item.latitude != 0 && item.longitude != 0)
+              row.append('<td><a href="http://maps.google.com/maps?q=' + item.latitude + ',' + item.longitude + '" target="_blank">' + item.city + ' ' + item.region + ', ' + item.country + '</a></td>');
+            else
+              row.append('<td>Unknown</td>');
+            $(table).append(row);
+          }
+
+          $(table).appendTo($('#locations'));
+          $('table.locationlist').dataTable({
+              "iDisplayLength": 10,
+              "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+              "sPaginationType": "bootstrap",
+              "bStateSave": false,
+              "aaSorting": [[1,'desc']]
+          });
+	})
+	.fail(function () { $(btn).data('loaded', 'false'); })
+	.always(function() { $(btn).removeClass('active'); });
+    });
+
+    var preferenceList;
+    $('#btnPreferences').click(function () {
+      btn = $(this)
+      if ($(btn).data('loaded') == 'true')
+        return;
+      $(btn).data('loaded', 'true');
+
+      $(btn).addClass('active');
+      $.ajax({ url: '.', data: { command: 'ListPreferences' }, dataType: 'json' })
+	.done(function (data) {
+          var table = $('table.preferencesTemplate').clone();
+          $(table).addClass('preferencelist').removeClass('preferencesTemplate').show();
+
+          for (var i = 0; i < data.objects.length; i++) {
+            var item = data.objects[i];
+            var row = $('<tr></tr>');
+            var url = "{% url 'device_preference_edit' device.udid '__REPLACE__' %}";
+
+            row.append('<td><a href="' + url.replace('__REPLACE__', item.id) + '">' + item.name + '</a>  <button data-id="' + data.objects[i].id + '" class="btnRemove btnRemovePreference btn btn-danger btn-small"><i class="icon-remove-sign"></i></button></td>');
+            row.find("button[data-id='" + data.objects[i].id + "']").deleteButton(btnRemovePreferenceFunction);
+            row.append('<td>' + item.id + '</td>');
+            $(table).append(row);
+          }
+
+          $(table).prependTo($('#preferences'));
+          preferenceList = $('table.preferencelist').dataTable({
+              "iDisplayLength": 10,
+              "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+              "sPaginationType": "bootstrap",
+              "bStateSave": false,
+              "aaSorting": [[1,'desc']]
+          });
+	})
+	.fail(function () { $(btn).data('loaded', 'false'); })
+	.always(function() { $(btn).removeClass('active'); });
+    });
+
+    var btnRemoveGroupFunction = function () {
+      var tr = $(this).closest('tr');
+      $.ajax({
+          url: '.',
+          data: { 'command': 'removeGroup', 'id': $(this).data('id') },
+          dataType: 'json'
+      })
+      .done(function(data) {
+        if (data.status == 'OK') {
+          $(tr).remove();
+          return;
+        }
+        alert('Error: ' + data.error);
+      })
+      .fail(function() {
+        alert('Failed to contact server.');
+      });
+    };
+    var groupSelector = $('#addGroupTxt').selectize({
+        create: false,
+        valueField: 'id',
+        labelField: 'name',
+        searchField: ['name'],
+        load: function(query, callback) {
+            if (!query.length) return callback();
+            $.ajax({
+                url: '.',
+                data: { 'command': 'availableGroups', 'query': query },
+                dataType: 'json'
+            })
+            .done(function(data) {
+                return callback(data.items);
+            })
+            .fail(function() {
+                callback();
+            });
+        }
+    });
+    groupSelector.on('change', function() {
+      var value = groupSelector[0].selectize.getValue();
+      if (value.length == 0)
+        $('#addGroups').addClass('disabled');
+      else
+        $('#addGroups').removeClass('disabled');
+    });  
+    $('#addGroups').click(function () {
+        var value = groupSelector[0].selectize.getValue();
+        if (value.length == 0)
+          return;
+       
+        $.ajax({
+            url: '.',
+            data: { command: 'addGroups', id: value },
+            dataType: 'json'
+        })
+        .done(function(data) {
+            if (data.status == 'OK') {
+                groupSelector[0].selectize.clear();
+                for (var i = 0; i < data.items.length; i++) {
+                    var tr = $('<tr><td><a href="#">' + data.items[i].name + '</a> <button data-id="' + data.items[i].id + '" class="btnRemove btnRemoveGroup btn btn-danger btn-small"><i class="icon-remove-sign"></i></button></td></tr>');
+                    $('table.groupList > tbody').append(tr);
+                    $("button[data-id='" + data.items[i].id + "']").deleteButton(btnRemoveGroupFunction);
+                }
+                return;
+            }  
+            alert('Error: ' + data.error);
+        })
+        .fail(function() {
+            alert('Failed to contact server.');
+        });
+    });
+    $('.btnRemoveGroup').deleteButton(btnRemoveGroupFunction);
+
+    var btnRemovePreferenceFunction = function () {
+      var tr = $(this).closest('tr');
+      $.ajax({
+          url: '.',
+          data: { 'command': 'removePreference', 'id': $(this).data('id') },
+          dataType: 'json'
+      })
+      .done(function(data) {
+        if (data.status == 'OK') {
+          preferenceList.fnDeleteRow(tr.get(0));
+          return;
+        }
+        alert('Error: ' + data.error);
+      })
+      .fail(function() {
+        alert('Failed to contact server.');
+      });
+    };
+    $('#addPreferenceTxt').keyup(function(e) {
+      var value = $(this).val();
+      if (value.length == 0)
+        $('#btnAddPreference').addClass('disabled');
+      else
+        $('#btnAddPreference').removeClass('disabled');
+      if (e.which == 10 || e.which == 13)
+        $('#btnAddPreference').click();
+    });
+    $('#btnAddPreference').click(function () {
+        var value = $('#addPreferenceTxt').val();
+        if (value.length == 0)
+          return;
+
+        var url = '{% url 'device_preference_edit' device.udid '__REPLACE__' %}';
+        window.location = url.replace('__REPLACE__', value);
+    });
+
+    function performAsyncAction(btn, e, url)
+    {
+      e.preventDefault();
+      $(btn).addClass('active');
+      $.ajax({ url: url })
+	.done(function (data) { if (data != 'OK') alert('Error occurred trying to contact the server.'); })
+	.fail(function () { alert('Error occurred trying to contact the server.'); })
+	.always(function() { setTimeout(function () { $(btn).removeClass('active'); }, 1000); });
+    }
+
+    $('#requestCheckin').click(function(e) { performAsyncAction($(this), e, 'push/'); });
+    $('#updateDeviceInformation').click(function(e) { performAsyncAction($(this), e, 'info/'); });
+    $('#updateApplicationList').click(function(e) { performAsyncAction($(this), e, 'apps/'); });
+    $('#updateProfileList').click(function(e) { performAsyncAction($(this), e, 'profiles/'); });
+    $('#installProfile').click(function(e) { performAsyncAction($(this), e, 'profile/'); });
+
+    var hash = document.location.hash;
+    if (hash)
+      $('a[href="' + hash + '"]').click();
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row-fluid">
+  <div class="span5 highlight">
+    <h3>{{ device }}</h3>
+    <table class="deviceinfo table table-condensed">
+      <tbody>
+        <tr><th>Last Check-in:</th><td>{{ device.last_checkin|format_date }}</td></tr>
+        <tr><th>Product:</th><td>{{ device.product_name }}</td></tr>
+        <tr><th>Type:</th><td>{{ device.get_type_display }}</td></tr>
+        <tr><th>OS:</th><td>{{ device.get_os_display }} {{ device.os_version }}</td></tr>
+        <tr><th>Model:</th><td>{{ device.model }}</td></tr>
+{% if device.capacity %}
+        <tr><th>Available Storage:</th><td>{{ device.available_capacity | format_number:"%0.1f" }}GB / {{ device.capacity | format_number:"%0.1f" }}GB</td></tr>
+{% else %}
+        <tr><th>Available Storage:</th><td>n/a</td></tr>
+{% endif %}
+        <tr><th>Serial:</th><td>{{ device.serial_number }}</td></tr>
+        <tr><th>Ethernet:</th><td>{{ device.ethernet_mac }}</td></tr>
+        <tr><th>WiFi:</th><td>{{ device.wifi_mac }}</td></tr>
+        <tr><th>Bluetooth:</th><td>{{ device.bluetooth_mac }}</td></tr>
+        <tr><th>Battery:</th><td>{% include "mdm/battery_level.html" with battery_level=device.battery_level %}</td>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="span4 highlight">
+    <h3>Groups</h3>
+    <table class="groupList table table-condensed">
+      <tbody>
+{% for group in groups %}
+        <tr><td><a href="{% url 'devicegroup_detail' group.uuid %}">{{ group.name }}</a>&nbsp;<button data-id="{{ group.uuid }}" class="btnRemove btnRemoveGroup btn btn-danger btn-small"><i class="icon-remove-sign"></i></td></tr>
+{% endfor %}
+      </tbody>
+    </table>
+
+    <div style="margin-top: 15px;">
+      <input id="addGroupTxt" type="text" />
+      <button id="addGroups" class="btn btn-success disabled" style="margin-top: 5px;"><i class="icon-plus-sign"></i> Add</button>
+    </div>
+  </div>
+
+  <div class="span3 highlight actions">
+    <h3>Actions</h3>
+    <hr />
+    <div><a id="requestCheckin" style="display: block;" class="btn btn-info has-spinner" href="#"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>Request Checkin</a></div>
+    <div><a id="updateDeviceInformation" style="display: block;" class="btn btn-info has-spinner" href="#"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>Update Device Information</a></div>
+    <div><a id="updateApplicationList" style="display: block;" class="btn btn-info has-spinner" href="#"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>Update Application List</a></div>
+    <div><a id="updateProfileList" style="display: block;" class="btn btn-info has-spinner" href="#"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>Update Profile List</a></div>
+    <div><a id="installProfile" style="display: block;" class="btn btn-info has-spinner" href="#"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>Install MCX Profile</a></div>
+  </div>
+</div>
+
+<div id="inventory" style="margin-top: 25px" class="highlight">
+  <ul class="nav nav-pills" data-tabs="tabs">
+    <li class="active"><a href="#apps" data-toggle="tab">Applications</a></li>
+    <li><a id="btnProfiles" class="has-spinner" href="#profiles" data-toggle="tab"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>Profiles</a></li>
+    <li><a id="btnCommandHistory" class="has-spinner" href="#commands" data-toggle="tab"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>History</a></li>
+    <li><a id="btnLocationHistory" class="has-spinner" href="#locations" data-toggle="tab"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>Location</a></li>
+    <li><a id="btnPreferences" class="has-spinner" href="#preferences" data-toggle="tab"><span class="spinner"><i class="fa fa-refresh fa-spin" style="margin-right: 5px;"></i></span>Preferences</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane active" id="apps">
+      <h5>Last Updated: {{ apps_last_updated|format_date }}</h5>
+      <table class="applicationlist table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Identifier</th>
+            <th>Version</th>
+            <th>Size</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+{% for app in apps %}
+          <tr>
+            <td>{{ app.name }}</td>
+            <td>{{ app.identifier }}</td>
+            <td>{{ app.short_version }}</td>
+            <td>{% widthratio app.bundle_size 1048576 1 %}MB</td>
+            <td>{% widthratio app.dynamic_size 1048576 1 %}MB</td>
+          </tr>
+{% endfor %}
+        </body>
+      </table>
+    </div>
+
+    <div class="tab-pane" id="profiles">
+      <h5>Last Updated: {{ profiles_last_updated|format_date }}</h5>
+      <table style="display: none;" class="profilesTemplate table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Managed</th>
+            <th>Up To Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tab-pane" id="commands">
+      <table style="display: none;" class="commandHistoryTemplate table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th>Date Requested</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Date Completed</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tab-pane" id="locations">
+      <table style="display: none;" class="locationHistoryTemplate table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th>Start</th>
+            <th>End</th>
+            <th>IP Address</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tab-pane" id="preferences">
+      <table style="display: none;" class="preferencesTemplate table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th>Application</th>
+            <th>Identifier</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+
+      <div style="margin-top: 35px;">
+        <div><input id="addPreferenceTxt" type="text" /></div>
+        <button id="btnAddPreference" class="btn btn-success disabled"><i class="icon-plus-sign"></i> Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

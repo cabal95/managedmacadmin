@@ -1,0 +1,64 @@
+table.plist {
+    width: 100%;
+    border-spacing: 0px;
+    border-collapse: separate;
+}
+
+table.plist > tbody > tr > td.plist-key {
+    min-width: 100px;
+    white-space: nowrap;
+}
+
+table.plist > tbody > tr > td.plist-type {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+table.plist > tbody > tr > td.plist-value {
+    min-width: 350px;
+}
+
+table.plist > tbody > tr > td.plist-key > input {
+    width: 200px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+table.plist > tbody > tr > td.plist-type > select {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+table.plist > tbody > tr > td.plist-value > input {
+    width: 300px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+table.plist > tbody > tr > td.plist-key > span.plist-indent {
+    display: inline-block;
+    margin: 0px;
+    padding: 0px;
+}
+
+table.plist > tbody > tr > td.plist-value > span.plist-value-icons {
+    display: inline-block;
+    float: right;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+table.plist > tbody > tr > td.plist-value > span.plist-value-icons > i {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+table.plist > tbody > tr > td.plist-key > input {
+    width: 175px;
+}
+
+table.plist > tbody > tr.plist-indentlevel-0 { background-color: #d9edf7; }
+table.plist > tbody > tr.plist-indentlevel-1 { background-color: #edf7d9; }
+table.plist > tbody > tr.plist-indentlevel-2 { background-color: #f7d9c2; }
+table.plist > tbody > tr.plist-indentlevel-3 { background-color: #d99292; }
+table.plist > tbody > tr.plist-indentlevel-4 { background-color: #92d992; }

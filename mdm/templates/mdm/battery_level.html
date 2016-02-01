@@ -1,0 +1,14 @@
+{% load mdm_extras %}
+{% if battery_level %}
+        <div class="progress">
+ {% if battery_level >= 0.5 %}
+          <div class="bar bar-success" role="progressbar" style="width: {{ battery_level|format_percent }};">{{ battery_level|format_percent }}</div>
+ {% elif battery_level >= 0.25 %}
+          <div class="bar bar-warning" role="progressbar" style="width: {{ battery_level|format_percent }};">{{ battery_level|format_percent }}</div>
+ {% else %}
+          <div class="bar bar-danger" role="progressbar" style="color: black; width: {{ battery_level|format_percent }};">{{ battery_level|format_percent }}</div>
+ {% endif %}
+        </div>
+{% else %}
+        n/a
+{% endif %}

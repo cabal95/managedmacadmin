@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load mdm_extras %}
+{% load static %}
+
+{% block extra_style %}
+<link rel="stylesheet" type="text/css" href="{% static 'mdm/style.css' %}" />
+{% endblock %}
+
+{% block java_script %}
+<script type="text/javascript" src=""></script>
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function() {
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+{% if invalid %}
+  <div class="row text-error" style="text-align: center; margin-bottom: 30px;">Invalid PIN</div>
+{% endif %}
+<div class="row .text-center" style="text-align: center;">
+  <form target="." method="POST">
+    Pin Code: <input name="pin" type="text" style="size: 100px;" /><br />
+    <input type="submit" class="btn btn-primary" value="Enroll" />
+  </form>
+</div>
+{% endblock %}

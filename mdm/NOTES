@@ -1,0 +1,4 @@
+On the Profiles tab for devices we should also list un-installed profiles.
+New column called "Installed" that is true for all profiles found in the
+information returned by the device and false for all profiles found in the
+database but not found on the device.
